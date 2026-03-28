@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HireFlow — AI Recruitment Dashboard</title>
+    <meta name="description" content="HireFlow: Enterprise AI-powered recruitment platform with intelligent candidate evaluation">
+    <link rel="stylesheet" href="./styles.css">
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+    <div class="bg-effects">
+        <div class="bg-grid"></div>
+        <div class="glow-orb"></div>
+        <div class="glow-orb"></div>
+        <div class="glow-orb"></div>
+    </div>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useCallback } = React;
+        const API = 'http://localhost:8000';
+
+        /* ─── Toast Component ─── */
+        const Toast = ({ message, type, onClose }) => {
+            useEffect(() => {
+                const t = setTimeout(onClose, 3500);
+                return () => clearTimeout(t);
+            }, []);
+            return <div className={`toast toast-${type}`}>{message}</div>;
+        };
+
+        /* ─── Settings Modal ─── */
+        const SettingsModal = ({ onClose, onSave }) => {
+            const [key, setKey] = useState('');
+            const [saving, setSaving] = useState(false);
+
+            const handleSave = async () => {
+                if (!key.trim()) return;
+                setSaving(true);
+                try {
+                    await fetch(`${API}/api/settings/api-key`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ api_key: key.trim() })
+                    });
+                    onSave();
+                    onClose();
+                } catch (err) {
+                    console.error(err);
+                }
+                setSaving(false);
+            };
+
+            return (
+                <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
+                    <div className="modal-card">
+                        <button className="modal-close" onClick={onClose}>✕</button>
+                        <h2 style={{fontSize:'1.2rem',fontWeight:700,marginBottom:'6px'}}>⚙️ Settings</h2>
+                        <p style={{color:'var(--text-secondary)',fontSize:'0.85rem',marginBottom:'24px'}}>
+                            Configure your HireAI API key to enable AI-powered evaluations.
+                        </p>
+                        <div className="form-group">
+                            <label className="form-label">HireAI API Key</label>
+                            <input
+                                type="password"
+                                className="form-input"
+                                value={key}
+                                onChange={e => setKey(e.target.value)}
+                                placeholder="AIzaSy..."
+                            />
+                            <p style={{fontSize:'0.72rem',color:'var(--text-muted)',marginTop:'6px'}}>
+                                Get your key from <a href="https://aistudio.google.com/apikey" target="_blank" style={{color:'var(--brand-primary-light)'}}>Google AI Studio</a>
+                            </p>
+                        </div>
+                        <button className="btn btn-primary" onClick={handleSave} disabled={saving || !key.trim()} style={{width:'100%',marginTop:'8px'}}>
+                            {saving ? <><span className="spinner" style={{width:16,height:16,borderWidth:2}}></span> Saving...</> : '💾 Save API Key'}
+                        </button>
+                    </div>
+                </div>
+            );
+        };
+
+        const EvalPanel = ({ c }) => {
+            const m = c.metrics;
+            const bi = m.behavioral_insights || {};
+            const GitHubAnalysisDropdown = ({ data }) => {
+                let d = data;
+                if (typeof d === 'string') {
+                    try { d = JSON.parse(d); } catch(e) { return null; }
+                }
+                if (!d || Object.keys(d).length === 0 || !d.repo_count) return null;
+                
+                const sizeStr = d.total_size_kb !== undefined 
+                    ? (d.total_size_kb >= 1024 ? (d.total_size_kb / 1024).toFixed(1) + ' MB' : d.total_size_kb + ' KB')
+                    : 'N/A';
+                const activityStr = d.recent_activity_days !== null && d.recent_activity_days !== undefined
+                    ? (d.recent_activity_days === 0 ? 'Today' : d.recent_activity_days + 'd ago')
+                    : 'N/A';
+                const activityColor = d.recent_activity_days !== null && d.recent_activity_days !== undefined
+                    ? (d.recent_activity_days <= 7 ? '#22c55e' : d.recent_activity_days <= 30 ? '#eab308' : '#ef4444')
+                    : '#888';
+
+                return (
+                    <details className="gh-dropdown">
+                        <summary>🐙 GitHub Analysis ({d.repo_count} repos, {d.total_stars} ⭐)</summary>
+                        <div className="gh-dropdown-content">
+                            
+                            {/* Bio */}
+                            {d.bio && <div style={{fontSize:'0.78rem',color:'var(--text-muted)',marginBottom:'12px',fontStyle:'italic',borderLeft:'2px solid var(--brand-primary)',paddingLeft:'10px'}}>"{d.bio}"</div>}
+                            
+                            {/* Section 1: Overview Grid */}
+                            <div style={{fontSize:'0.72rem',fontWeight:700,color:'var(--brand-primary-light)',marginBottom:'6px',textTransform:'uppercase',letterSpacing:'0.5px'}}>📊 Profile Overview</div>
+                            <div className="gh-grid">
+                                <div className="gh-stat"><span>📁 Repositories:</span> {d.repo_count} ({d.original_repo_count !== undefined ? d.original_repo_count + ' original' : ''})</div>
+                                <div className="gh-stat"><span>⭐ Total Stars:</span> {d.total_stars}</div>
+                                <div className="gh-stat"><span>🍴 Total Forks:</span> {d.total_forks !== undefined ? d.total_forks : 'N/A'}</div>
+                                <div className="gh-stat"><span>👥 Followers:</span> {d.followers}</div>
+                                <div className="gh-stat"><span>👤 Following:</span> {d.following !== undefined ? d.following : 'N/A'}</div>
+                                <div className="gh-stat"><span>💾 Codebase:</span> {sizeStr}</div>
+                                <div className="gh-stat"><span>📅 Account Age:</span> {d.account_age_years ? d.account_age_years + ' years' : 'N/A'}</div>
+                                <div className="gh-stat"><span style={{color: activityColor}}>🔥 Last Active:</span> <span style={{color: activityColor, fontWeight:600}}>{activityStr}</span></div>
+                            </div>
+
+                            {/* Section 2: Languages */}
+                            {d.languages && d.languages.length > 0 && (
+                                <div style={{marginTop:'14px'}}>
+                                    <div style={{fontSize:'0.72rem',fontWeight:700,color:'var(--brand-primary-light)',marginBottom:'6px',textTransform:'uppercase',letterSpacing:'0.5px'}}>🌐 Languages</div>
+                                    <div style={{display:'flex',flexWrap:'wrap',gap:'5px'}}>
+                                        {d.languages.map((lang, i) => (
+                                            <span key={i} style={{padding:'3px 10px',borderRadius:'12px',fontSize:'0.7rem',fontWeight:600,background:'rgba(139,92,246,0.12)',color:'#a78bfa',border:'1px solid rgba(139,92,246,0.25)'}}>{lang}</span>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Section 3: Top Repos */}
+                            {d.top_repos && d.top_repos.length > 0 && (
+                                <div style={{marginTop:'14px'}}>
+                                    <div style={{fontSize:'0.72rem',fontWeight:700,color:'var(--brand-primary-light)',marginBottom:'6px',textTransform:'uppercase',letterSpacing:'0.5px'}}>🏆 Top Repositories</div>
+                                    <div style={{borderRadius:'8px',overflow:'hidden',border:'1px solid rgba(255,255,255,0.06)'}}>
+                                        <table style={{width:'100%',borderCollapse:'collapse',fontSize:'0.72rem'}}>
+                                            <thead>
+                                                <tr style={{background:'rgba(255,255,255,0.03)'}}>
+                                                    <th style={{textAlign:'left',padding:'6px 8px',color:'var(--text-muted)',fontWeight:600}}>Repo</th>
+                                                    <th style={{textAlign:'center',padding:'6px 8px',color:'var(--text-muted)',fontWeight:600}}>⭐</th>
+                                                    <th style={{textAlign:'center',padding:'6px 8px',color:'var(--text-muted)',fontWeight:600}}>🍴</th>
+                                                    <th style={{textAlign:'left',padding:'6px 8px',color:'var(--text-muted)',fontWeight:600}}>Language</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {d.top_repos.map((repo, i) => (
+                                                    <tr key={i} style={{borderTop:'1px solid rgba(255,255,255,0.04)'}}>
+                                                        <td style={{padding:'5px 8px'}}>
+                                                            {repo.url ? <a href={repo.url} target="_blank" rel="noopener" style={{color:'#60a5fa',textDecoration:'none',fontWeight:600}}>{repo.name}</a> : repo.name}
+                                                            {repo.description && <div style={{fontSize:'0.65rem',color:'var(--text-muted)',marginTop:'2px'}}>{repo.description}</div>}
+                                                        </td>
+                                                        <td style={{textAlign:'center',padding:'5px 8px',color:'#fbbf24'}}>{repo.stars}</td>
+                                                        <td style={{textAlign:'center',padding:'5px 8px',color:'var(--text-muted)'}}>{repo.forks}</td>
+                                                        <td style={{padding:'5px 8px',color:'#a78bfa'}}>{repo.language || 'N/A'}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Section 4: Score Breakdown */}
+                            <div style={{marginTop:'14px'}}>
+                                <div style={{fontSize:'0.72rem',fontWeight:700,color:'var(--brand-primary-light)',marginBottom:'6px',textTransform:'uppercase',letterSpacing:'0.5px'}}>📈 Score Breakdown</div>
+                                <div className="gh-grid">
+                                    <div className="gh-stat"><span>📝 Doc/Issues:</span> {d.doc_count !== undefined ? d.doc_count + ' repos' : 'N/A'}</div>
+                                    <div className="gh-stat"><span>🧩 Complexity Bonus:</span> <span style={{color:'#22c55e',fontWeight:700}}>{d.complexity_bonus !== undefined ? '+' + d.complexity_bonus : 'N/A'}</span></div>
+                                </div>
+                            </div>
+
+                            <div className="gh-score">Total GitHub Score: <strong>{d.score}/100</strong></div>
+                        </div>
+                    </details>
+                );
+            };
+
+            const ScoreBar = ({ label, value, weight, description }) => (
+                <div style={{marginBottom:'10px'}}>
+                    <div className="metric-row">
+                        <span className="metric-label">{label} ({weight})</span>
+                        <span className="metric-value">{value || '—'}</span>
+                    </div>
+                    {value > 0 && (
+                        <div className="metric-bar">
+                            <div className="metric-bar-fill" style={{width: `${value}%`}}></div>
+                        </div>
+                    )}
+                    {description && <div style={{fontSize:'0.68rem',color:'var(--text-muted)',marginTop:'4px',lineHeight:'1.2'}}>{description}</div>}
+                </div>
+            );
+
+            return (
+                <div className="eval-panel">
+                    <div className="eval-grid">
+                        {/* Col 1: AI Insights */}
+                        <div className="eval-section">
+                            <div className="eval-section-title" style={{color:'var(--brand-primary-light)'}}>
+                                🧠 AI Insights
+                            </div>
+                            {bi.summary && (
+                                <div className="ai-summary-box">
+                                    <div className="ai-summary-label">🤖 AI Assessment</div>
+                                    <div className="ai-summary-text">"{bi.summary}"</div>
+                                </div>
+                            )}
+                            {bi.key_observations && bi.key_observations.length > 0 && (
+                                <ul className="observations-list" style={{marginTop:'16px'}}>
+                                    {bi.key_observations.map((obs, i) => <li key={i}>{obs}</li>)}
+                                </ul>
+                            )}
+                            {bi.red_flags && (
+                                <div className="red-flag-box">
+                                    <span>⚠️</span>
+                                    <span>{bi.red_flags}</span>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Col 2: Behavioral Analysis */}
+                        <div className="eval-section">
+                            <div className="eval-section-title" style={{color:'var(--cyan)'}}>
+                                🎯 Behavioral Analysis
+                            </div>
+                            <div className="metric-row">
+                                <span className="metric-label">Communication</span>
+                                <span className="metric-value">{bi.communication_stars}</span>
+                            </div>
+                            <div className="metric-row">
+                                <span className="metric-label">Confidence</span>
+                                <span className="metric-value">{bi.confidence_stars}</span>
+                            </div>
+                            <div className="metric-row">
+                                <span className="metric-label">Technical Clarity</span>
+                                <span className="metric-value">{bi.technical_clarity_stars}</span>
+                            </div>
+                            <div style={{marginTop:'12px',padding:'10px 14px',background:'rgba(0,0,0,0.2)',borderRadius:'var(--radius-sm)',fontSize:'0.78rem'}}>
+                                <div className="metric-row">
+                                    <span className="metric-label">Communication Score</span>
+                                    <span className="metric-value" style={{color:'var(--cyan)'}}>{bi.communication_score}</span>
+                                </div>
+                                <div className="metric-row">
+                                    <span className="metric-label">Confidence Score</span>
+                                    <span className="metric-value" style={{color:'var(--cyan)'}}>{bi.confidence_score}</span>
+                                </div>
+                                <div className="metric-row">
+                                    <span className="metric-label">Technical Score</span>
+                                    <span className="metric-value" style={{color:'var(--cyan)'}}>{bi.technical_score}</span>
+                                </div>
+                                <div className="metric-row">
+                                    <span className="metric-label">Professionalism</span>
+                                    <span className="metric-value" style={{color:'var(--cyan)'}}>{bi.professionalism_score}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Col 3: Composite Breakdown */}
+                        <div className="eval-section" style={{display:'flex',flexDirection:'column'}}>
+                            <div className="eval-section-title" style={{color:'var(--emerald)'}}>
+                                📊 Score Breakdown
+                            </div>
+                            <ScoreBar label="Resume" value={c.baselineScore} weight="25%" />
+                            <ScoreBar label="GitHub" value={m.github_score} weight="20%" />
+                            {m.github_data && <GitHubAnalysisDropdown data={m.github_data} />}
+                            <ScoreBar label="Interview QA" value={m.interview_qa} weight="20%" />
+                            <ScoreBar label="Behavior" value={m.behavior_score} weight="15%" />
+                            <ScoreBar label="Career Growth" value={m.career_growth} weight="10%" />
+                            <ScoreBar label="Consistency" value={m.consistency} weight="10%" />
+
+                            <div className="kpi-composite">
+                                <div className="kpi-label">Final Composite Score</div>
+                                <div className="kpi-value">{m.composite_score}</div>
+                                <div className="kpi-sublabel">Weighted AI Analysis</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        /* ─── Main App ─── */
+        const App = () => {
+            const [candidates, setCandidates] = useState([]);
+            const [stats, setStats] = useState({});
+            const [loading, setLoading] = useState(true);
+            const [evaluatingId, setEvaluatingId] = useState(null);
+            const [filter, setFilter] = useState('all');
+            const [showSettings, setShowSettings] = useState(false);
+            const [apiConfigured, setApiConfigured] = useState(false);
+            const [toast, setToast] = useState(null);
+            const [expandedId, setExpandedId] = useState(null);
+
+            const showToast = (message, type = 'info') => setToast({ message, type });
+
+            const checkConfig = async () => {
+                try {
+                    const res = await fetch(`${API}/api/settings/status`);
+                    const data = await res.json();
+                    setApiConfigured(data.configured);
+                } catch { setApiConfigured(false); }
+            };
+
+            const fetchStats = async () => {
+                try {
+                    const user = JSON.parse(localStorage.getItem('hireflow_user') || '{}');
+                    const companyQuery = user.company ? `?company=${encodeURIComponent(user.company)}` : '';
+                    const res = await fetch(`${API}/api/stats${companyQuery}`);
+                    setStats(await res.json());
+                } catch {}
+            };
+
+            const fetchCandidates = useCallback(async () => {
+                setLoading(true);
+                try {
+                    const user = JSON.parse(localStorage.getItem('hireflow_user') || '{}');
+                    const companyQuery = user.company ? `?company=${encodeURIComponent(user.company)}` : '';
+                    const res = await fetch(`${API}/api/candidates${companyQuery}`);
+                    const data = await res.json();
+                    setCandidates(data.candidates || []);
+                } catch (err) {
+                    console.error('Backend unreachable:', err);
+                    setCandidates([]);
+                }
+                setLoading(false);
+            }, []);
+
+            useEffect(() => {
+                const user = JSON.parse(localStorage.getItem('hireflow_user') || '{}');
+                if (!user.email) { window.location.href = 'login.html'; return; }
+                fetchCandidates();
+                fetchStats();
+                checkConfig();
+            }, [fetchCandidates]);
+
+            const logout = () => {
+                localStorage.removeItem('hireflow_user');
+                window.location.href = 'login.html';
+            };
+
+            // Analytics categories
+            const bestCandidates = candidates.filter(c => c.evaluated && c.metrics && c.metrics.composite_score >= 80);
+            const mediumCandidates = candidates.filter(c => c.evaluated && c.metrics && c.metrics.composite_score >= 50 && c.metrics.composite_score < 80);
+            const lowCandidates = candidates.filter(c => c.evaluated && c.metrics && c.metrics.composite_score < 50);
+
+            const triggerEvaluation = async (id) => {
+                if (!apiConfigured) {
+                    showToast('Please configure your HireAI API key first', 'error');
+                    setShowSettings(true);
+                    return;
+                }
+                setEvaluatingId(id);
+                showToast('Running AI deep evaluation...', 'info');
+                try {
+                    const res = await fetch(`${API}/api/interviews/evaluate`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ candidate_id: id })
+                    });
+                    const data = await res.json();
+                    if (data.error || data.detail) {
+                        showToast(data.error || data.detail, 'error');
+                    } else {
+                        showToast('AI evaluation completed successfully!', 'success');
+                        setExpandedId(id);
+                    }
+                    await fetchCandidates();
+                    await fetchStats();
+                } catch (err) {
+                    showToast('Evaluation failed — check backend logs', 'error');
+                }
+                setEvaluatingId(null);
+            };
+
+            const updateStatus = async (id, status) => {
+                try {
+                    await fetch(`${API}/api/candidates/${id}/status`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ status })
+                    });
+                    showToast(`Candidate ${status.toLowerCase()}`, 'success');
+                    await fetchCandidates();
+                    await fetchStats();
+                } catch {}
+            };
+
+            const deleteCandidate = async (id) => {
+                try {
+                    await fetch(`${API}/api/candidates/${id}`, { method: 'DELETE' });
+                    showToast('Candidate removed', 'success');
+                    await fetchCandidates();
+                    await fetchStats();
+                } catch {}
+            };
+
+            const filtered = candidates.filter(c => {
+                if (filter === 'all') return true;
+                if (filter === 'evaluated') return c.evaluated;
+                if (filter === 'pending') return !c.evaluated && c.status === 'Applied';
+                if (filter === 'shortlisted') return c.status === 'Shortlisted';
+                return true;
+            });
+
+            const getScoreClass = (score) => {
+                if (score >= 80) return 'score-high';
+                if (score >= 60) return 'score-mid';
+                return 'score-low';
+            };
+
+            const getStatusClass = (status) => {
+                if (status === 'Deep Evaluated') return 'status-evaluated';
+                if (status === 'Shortlisted') return 'status-shortlisted';
+                if (status === 'Rejected') return 'status-rejected';
+                return 'status-applied';
+            };
+
+            const getInitials = (name) => {
+                if (!name) return '?';
+                return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+            };
+
+            return (
+                <div className="app-shell">
+                    {/* ─── Sidebar ─── */}
+                    <nav className="sidebar">
+                        <div className="sidebar-brand">
+                            <div className="brand-logo">
+                                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{color:'var(--brand-primary-light)'}}>
+                                    <path d="M4 4H10L12 6H20V20H4V4Z" fill="currentColor" fillOpacity="0.2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                </svg>
+                                <span className="brand-name">HireFlow</span>
+                            </div>
+                            <div className="brand-tagline">AI Recruitment Platform</div>
+                        </div>
+
+                        <div className="sidebar-nav">
+                            <div className="nav-section-label">Main</div>
+                            <div className="nav-item active">
+                                <span className="nav-icon">📊</span>
+                                Pipeline
+                                {candidates.length > 0 && <span className="nav-badge">{candidates.length}</span>}
+                            </div>
+                            <div className="nav-item" onClick={() => showToast('Analytics coming soon', 'info')}>
+                                <span className="nav-icon">📈</span>
+                                Analytics
+                            </div>
+
+                            <div className="nav-section-label" style={{marginTop:'8px'}}>Manage</div>
+                            <a href="./upload.html" className="nav-item">
+                                <span className="nav-icon">📄</span>
+                                Applications
+                            </a>
+                            <a href="./interview.html" className="nav-item">
+                                <span className="nav-icon">🤖</span>
+                                AI Interview
+                            </a>
+                            <div className="nav-item" onClick={() => setShowSettings(true)}>
+                                <span className="nav-icon">⚙️</span>
+                                Settings
+                                {!apiConfigured && <span style={{width:8,height:8,borderRadius:'50%',background:'var(--rose)',marginLeft:'auto'}}></span>}
+                            </div>
+
+                            <div className="nav-spacer"></div>
+                        </div>
+
+                        <div className="sidebar-footer" style={{padding:'12px'}}>
+                            <button onClick={logout} style={{width:'100%',padding:'8px',border:'1px solid rgba(244,63,94,0.2)',borderRadius:'var(--radius-sm)',background:'none',color:'var(--rose)',fontSize:'0.75rem',fontFamily:'inherit',cursor:'pointer',fontWeight:600}}>🚪 Logout</button>
+                        </div>
+
+                        <div className="sidebar-footer">
+                            <a href="./upload.html" className="sidebar-cta">
+                                <span>➕</span>
+                                New Candidate
+                            </a>
+                        </div>
+                    </nav>
+
+                    {/* ─── Main Content ─── */}
+                    <main className="main-content">
+                        {/* Top Bar */}
+                        <div className="top-bar">
+                            <div className="page-header">
+                                <h1>
+                                    Recruitment Pipeline
+                                    <span className="tag tag-brand">HireAI</span>
+                                    <span className="tag tag-cyan">Live GitHub</span>
+                                </h1>
+                                <p>Intelligent candidate evaluation powered by multimodal AI analysis</p>
+                            </div>
+                            <div className="top-actions">
+                                {!apiConfigured && (
+                                    <button className="btn btn-outline btn-sm" onClick={() => setShowSettings(true)} style={{borderColor:'rgba(244,63,94,0.3)',color:'var(--rose)'}}>
+                                        ⚠️ Configure API Key
+                                    </button>
+                                )}
+                                <button onClick={fetchCandidates} className="btn btn-outline btn-sm">🔄 Refresh</button>
+                            </div>
+                        </div>
+
+                        {/* Stats */}
+                        <div className="stats-grid">
+                            <div className="stat-card">
+                                <div className="stat-icon stat-icon-brand">📋</div>
+                                <div className="stat-label">Total Candidates</div>
+                                <div className="stat-value">{stats.total_candidates || 0}</div>
+                            </div>
+                            <div className="stat-card">
+                                <div className="stat-icon stat-icon-amber">📄</div>
+                                <div className="stat-label">Avg. Resume Score</div>
+                                <div className="stat-value">{stats.avg_resume_score || 0}%</div>
+                            </div>
+                            <div className="stat-card">
+                                <div className="stat-icon stat-icon-emerald">✅</div>
+                                <div className="stat-label">AI Evaluations</div>
+                                <div className="stat-value">{stats.evaluated || 0}</div>
+                            </div>
+                            <div className="stat-card">
+                                <div className="stat-icon stat-icon-cyan">⭐</div>
+                                <div className="stat-label">Avg. Composite</div>
+                                <div className="stat-value">{stats.avg_composite_score || '—'}</div>
+                            </div>
+                        </div>
+
+                        {/* Filter + Header */}
+                        <div className="section-header">
+                            <h2 className="section-title">
+                                Candidates
+                                <span className="section-count">{filtered.length}</span>
+                            </h2>
+                        </div>
+
+                        <div className="filter-bar">
+                            {['all', 'pending', 'evaluated', 'shortlisted'].map(f => (
+                                <button
+                                    key={f}
+                                    className={`filter-btn ${filter === f ? 'active' : ''}`}
+                                    onClick={() => setFilter(f)}
+                                >
+                                    {f === 'all' ? 'All' : f.charAt(0).toUpperCase() + f.slice(1)}
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Candidate List */}
+                        {loading ? (
+                            <div className="empty-state loading-pulse">
+                                <div className="empty-state-icon">⏳</div>
+                                <p>Loading candidates from database...</p>
+                            </div>
+                        ) : filtered.length === 0 ? (
+                            <div className="empty-state">
+                                <div className="empty-state-icon">📭</div>
+                                <p>
+                                    {filter !== 'all'
+                                        ? `No ${filter} candidates found.`
+                                        : <>No candidates yet. <a href="./upload.html">Add your first candidate →</a></>
+                                    }
+                                </p>
+                            </div>
+                        ) : (
+                            filtered.map(c => (
+                                <div className="candidate-card" key={c.id}>
+                                    <div className="candidate-main">
+                                        <div className="candidate-avatar">{getInitials(c.name)}</div>
+                                        <div className="candidate-info">
+                                            <h3>
+                                                {c.name}
+                                                <span className={`status-pill ${getStatusClass(c.status)}`}>
+                                                    {c.status}
+                                                </span>
+                                            </h3>
+                                            <span className="candidate-email">{c.email}</span>
+                                            {c.years_experience > 0 && (
+                                                <span style={{fontSize:'0.75rem',color:'var(--text-muted)',marginLeft:'12px'}}>
+                                                    {c.years_experience} yrs exp.
+                                                </span>
+                                            )}
+                                            <div className="candidate-meta">
+                                                {c.skills && c.skills.slice(0, 6).map(s => (
+                                                    <span key={s} className="skill-badge">{s}</span>
+                                                ))}
+                                                {c.skills && c.skills.length > 6 && (
+                                                    <span className="skill-badge" style={{opacity:0.6}}>+{c.skills.length - 6}</span>
+                                                )}
+                                                {c.github_url && <a href={c.github_url} target="_blank" className="link-badge">GitHub</a>}
+                                                {c.linkedin_url && <a href={c.linkedin_url} target="_blank" className="link-badge">LinkedIn</a>}
+                                            </div>
+                                        </div>
+
+                                        <div className="candidate-actions">
+                                            <div className="score-display">
+                                                <div className={`score-number ${getScoreClass(c.baselineScore)}`}>
+                                                    {c.baselineScore}
+                                                </div>
+                                                <div className="score-label">Resume</div>
+                                            </div>
+
+                                            {c.evaluated && c.metrics && (
+                                                <div className="score-display">
+                                                    <div className={`score-number ${getScoreClass(c.metrics.composite_score)}`}>
+                                                        {c.metrics.composite_score}
+                                                    </div>
+                                                    <div className="score-label">Composite</div>
+                                                </div>
+                                            )}
+
+                                            {!c.evaluated ? (
+                                                <button
+                                                    className="btn btn-primary btn-sm"
+                                                    onClick={() => triggerEvaluation(c.id)}
+                                                    disabled={evaluatingId === c.id}
+                                                >
+                                                    {evaluatingId === c.id
+                                                        ? <><span className="spinner" style={{width:14,height:14,borderWidth:2}}></span> Analyzing...</>
+                                                        : '🎯 Deep Eval'}
+                                                </button>
+                                            ) : (
+                                                <button
+                                                    className="btn btn-outline btn-sm"
+                                                    onClick={() => setExpandedId(expandedId === c.id ? null : c.id)}
+                                                >
+                                                    {expandedId === c.id ? '▲ Collapse' : '▼ Details'}
+                                                </button>
+                                            )}
+
+                                            {c.evaluated && c.status !== 'Shortlisted' && c.status !== 'Rejected' && (
+                                                <div style={{display:'flex',gap:'6px'}}>
+                                                    <button className="btn btn-success btn-xs" onClick={() => updateStatus(c.id, 'Shortlisted')}>
+                                                        ✅ Accept
+                                                    </button>
+                                                    <button className="btn btn-outline btn-xs" style={{borderColor:'rgba(244,63,94,0.3)',color:'var(--rose)'}} onClick={() => updateStatus(c.id, 'Rejected')}>
+                                                        ❌ Reject
+                                                    </button>
+                                                </div>
+                                            )}
+
+                                            <button className="btn btn-ghost btn-icon" onClick={() => deleteCandidate(c.id)} title="Remove candidate" style={{fontSize:'0.85rem'}}>
+                                                🗑️
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* Expanded Eval Panel */}
+                                    {c.evaluated && c.metrics && c.metrics.behavioral_insights && expandedId === c.id && (
+                                        <EvalPanel c={c} />
+                                    )}
+                                </div>
+                            ))
+                        )}
+
+                        {/* ─── Analytics Section ─── */}
+                        {candidates.some(c => c.evaluated) && (
+                            <div style={{marginTop:'28px'}}>
+                                <h2 className="section-title" style={{marginBottom:'16px'}}>📈 Analytics Overview</h2>
+                                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'14px'}}>
+                                    {/* Best */}
+                                    <div style={{background:'rgba(16,185,129,0.06)',border:'1px solid rgba(16,185,129,0.2)',borderRadius:'var(--radius-md)',padding:'18px'}}>
+                                        <div style={{fontSize:'0.72rem',fontWeight:700,color:'#10b981',textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:'10px'}}>🏆 Best Scores (≥80)</div>
+                                        <div style={{fontSize:'1.8rem',fontWeight:800,color:'#10b981'}}>{bestCandidates.length}</div>
+                                        {bestCandidates.slice(0,3).map(c => (
+                                            <div key={c.id} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'6px 0',borderTop:'1px solid rgba(255,255,255,0.04)',marginTop:'6px',fontSize:'0.75rem'}}>
+                                                <span>{c.name}</span>
+                                                <span style={{color:'#10b981',fontWeight:700}}>{c.metrics.composite_score}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    {/* Medium */}
+                                    <div style={{background:'rgba(245,158,11,0.06)',border:'1px solid rgba(245,158,11,0.2)',borderRadius:'var(--radius-md)',padding:'18px'}}>
+                                        <div style={{fontSize:'0.72rem',fontWeight:700,color:'#f59e0b',textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:'10px'}}>📊 Medium Scores (50-79)</div>
+                                        <div style={{fontSize:'1.8rem',fontWeight:800,color:'#f59e0b'}}>{mediumCandidates.length}</div>
+                                        {mediumCandidates.slice(0,3).map(c => (
+                                            <div key={c.id} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'6px 0',borderTop:'1px solid rgba(255,255,255,0.04)',marginTop:'6px',fontSize:'0.75rem'}}>
+                                                <span>{c.name}</span>
+                                                <span style={{color:'#f59e0b',fontWeight:700}}>{c.metrics.composite_score}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    {/* Low */}
+                                    <div style={{background:'rgba(244,63,94,0.06)',border:'1px solid rgba(244,63,94,0.2)',borderRadius:'var(--radius-md)',padding:'18px'}}>
+                                        <div style={{fontSize:'0.72rem',fontWeight:700,color:'#f43f5e',textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:'10px'}}>⚠️ Low Scores (&lt;50)</div>
+                                        <div style={{fontSize:'1.8rem',fontWeight:800,color:'#f43f5e'}}>{lowCandidates.length}</div>
+                                        {lowCandidates.slice(0,3).map(c => (
+                                            <div key={c.id} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'6px 0',borderTop:'1px solid rgba(255,255,255,0.04)',marginTop:'6px',fontSize:'0.75rem'}}>
+                                                <span>{c.name}</span>
+                                                <span style={{color:'#f43f5e',fontWeight:700}}>{c.metrics.composite_score}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </main>
+
+                    {/* Settings Modal */}
+                    {showSettings && (
+                        <SettingsModal
+                            onClose={() => setShowSettings(false)}
+                            onSave={() => { checkConfig(); showToast('API key configured!', 'success'); }}
+                        />
+                    )}
+
+                    {/* Toast */}
+                    {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
+                </div>
+            );
+        };
+
+        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    </script>
+</body>
+</html>

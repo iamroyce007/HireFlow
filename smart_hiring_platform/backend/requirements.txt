@@ -1,0 +1,14 @@
+fastapi
+uvicorn
+pydantic
+sqlalchemy
+python-multipart
+pdfplumber
+httpx
+google-genai
+
+numpy
+scipy
+
+numpy
+scipy

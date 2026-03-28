@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recruiter Login — HireFlow</title>
+    <link rel="stylesheet" href="./styles.css">
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        .login-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+        .login-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-xl);
+            padding: 40px;
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+            box-shadow: var(--shadow-xl);
+        }
+        .login-logo-img {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 20px;
+            filter: drop-shadow(0 4px 20px rgba(245,158,11,0.2));
+            cursor: pointer;
+        }
+        .login-title {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+        .login-subtitle {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 32px;
+        }
+        .login-input {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--glass-border);
+            background: rgba(255,255,255,0.04);
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            margin-bottom: 12px;
+            outline: none;
+        }
+        .login-input:focus { border-color: var(--brand-primary); }
+        .login-btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-weight: 700;
+            cursor: pointer;
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            color: white;
+            transition: all 0.2s;
+        }
+        .login-btn:hover {
+            box-shadow: 0 4px 20px rgba(139,92,246,0.3);
+            transform: translateY(-1px);
+        }
+        .back-link {
+            margin-top: 24px;
+            display: block;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-decoration: none;
+        }
+        .back-link:hover { color: var(--text-secondary); }
+        .error { color: var(--rose); font-size: 0.75rem; margin-bottom: 12px; }
+        select.login-input {
+            appearance: none;
+            cursor: pointer;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%238892b0' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 14px center;
+            padding-right: 36px;
+        }
+        select.login-input option {
+            background: #0b0f1a;
+            color: var(--text-primary);
+            padding: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-effects">
+        <div class="bg-grid"></div>
+        <div class="glow-orb"></div>
+    </div>
+    <div id="root">
+        <div class="login-container" style="opacity: 0.5; pointer-events: none;">
+            <div class="login-card loading-pulse">
+                <div style="height: 60px; margin-bottom: 20px; background: rgba(255,255,255,0.05); border-radius: 10px;"></div>
+                <div style="height: 30px; margin-bottom: 10px; background: rgba(255,255,255,0.05); border-radius: 6px; width: 60%; margin-left: 20%;"></div>
+                <div style="height: 15px; margin-bottom: 30px; background: rgba(255,255,255,0.05); border-radius: 4px; width: 40%; margin-left: 30%;"></div>
+                <div style="height: 40px; margin-bottom: 12px; background: rgba(255,255,255,0.05); border-radius: 6px;"></div>
+                <div style="height: 40px; margin-bottom: 12px; background: rgba(255,255,255,0.05); border-radius: 6px;"></div>
+                <div style="height: 40px; background: rgba(139,92,246,0.1); border-radius: 6px;"></div>
+                <p style="margin-top: 20px; color: var(--text-muted); font-size: 0.8rem;">Initializing portal...</p>
+            </div>
+        </div>
+    </div>
+
+    <script type="text/babel">
+        const { useState } = React;
+
+        const RecruiterLogin = () => {
+            const [email, setEmail] = useState('');
+            const [pass, setPass] = useState('');
+            const [company, setCompany] = useState('');
+            const [error, setError] = useState('');
+
+            const COMPANIES = ['Google', 'Amazon', 'Meta', 'Microsoft', 'Netflix', 'HireFlow HQ'];
+
+            const handleLogin = (e) => {
+                e.preventDefault();
+                if (!email.trim() || !email.includes('@')) {
+                    setError('Please enter a valid email');
+                    return;
+                }
+                if (!pass.trim()) {
+                    setError('Please enter your password');
+                    return;
+                }
+                if (!company) {
+                    setError('Please select your company');
+                    return;
+                }
+                localStorage.setItem('hireflow_user', JSON.stringify({
+                    role: 'recruiter', 
+                    email: email.trim(),
+                    company: company
+                }));
+                window.location.href = 'index.html';
+            };
+
+            return (
+                <div className="login-container">
+                    <div className="login-card">
+                        <img src="./banner.png" alt="HireFlow" style={{width:'100%',maxWidth:260,marginBottom:20,cursor:'pointer'}} onClick={() => window.location.href='login.html'} />
+                        <h1 className="login-title">Recruiter Login</h1>
+                        <p className="login-subtitle">Enter your credentials to manage candidates</p>
+                        
+                        <form onSubmit={handleLogin}>
+                            {error && <div className="error">{error}</div>}
+                            <input
+                                className="login-input"
+                                type="email"
+                                placeholder="recruiter@company.com"
+                                value={email}
+                                onChange={e => { setEmail(e.target.value); setError(''); }}
+                                autoFocus
+                            />
+                            <input
+                                className="login-input"
+                                type="password"
+                                placeholder="Password"
+                                value={pass}
+                                onChange={e => { setPass(e.target.value); setError(''); }}
+                            />
+                            <select 
+                                className="login-input" 
+                                value={company} 
+                                onChange={e => { setCompany(e.target.value); setError(''); }}
+                                style={{appearance:'none', cursor:'pointer'}}
+                            >
+                                <option value="" disabled>Select Company</option>
+                                {COMPANIES.map(c => <option key={c} value={c}>{c}</option>)}
+                            </select>
+                            <button type="submit" className="login-btn" style={{marginTop:'8px'}}>
+                                Access Portal →
+                            </button>
+                        </form>
+                        
+                        <a href="login.html" className="back-link">← Back to role selection</a>
+                    </div>
+                </div>
+            );
+        };
+
+        ReactDOM.createRoot(document.getElementById('root')).render(<RecruiterLogin />);
+    </script>
+</body>
+</html>

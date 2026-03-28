@@ -1,0 +1,1890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proctored AI Interview — HireFlow</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg-primary: #0a0e1a;
+            --bg-card: #111827;
+            --bg-card-alt: #1a2236;
+            --bg-input: #0d1321;
+            --brand: #f59e0b;
+            --brand-glow: rgba(245, 158, 11, 0.3);
+            --brand-gradient: linear-gradient(135deg, #f59e0b, #ef4444);
+            --green: #22c55e;
+            --green-glow: rgba(34, 197, 94, 0.25);
+            --red: #ef4444;
+            --red-glow: rgba(239, 68, 68, 0.3);
+            --blue: #3b82f6;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border: rgba(255,255,255,0.08);
+            --radius: 12px;
+            --radius-lg: 16px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ─── BG EFFECTS ─── */
+        .bg-effects {
+            position: fixed; inset: 0; pointer-events: none; z-index: 0;
+            background:
+                radial-gradient(ellipse 600px 400px at 20% 30%, rgba(245,158,11,0.06), transparent),
+                radial-gradient(ellipse 500px 500px at 80% 70%, rgba(59,130,246,0.04), transparent);
+        }
+
+        /* ─── SETUP SCREEN ─── */
+        .setup-screen {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .setup-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 48px;
+            width: 100%;
+            max-width: 520px;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.5);
+        }
+
+        .setup-card h1 {
+            font-size: 1.75rem;
+            font-weight: 800;
+            margin-bottom: 6px;
+            background: var(--brand-gradient);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .setup-card .subtitle {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 32px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 14px 16px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            color: var(--text-primary);
+            font-size: 1rem;
+            font-family: inherit;
+            transition: var(--transition);
+            outline: none;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            border-color: var(--brand);
+            box-shadow: 0 0 0 3px var(--brand-glow);
+        }
+
+        .form-group select option {
+            background: var(--bg-card);
+            color: var(--text-primary);
+        }
+
+        .rules-box {
+            background: rgba(245,158,11,0.05);
+            border: 1px solid rgba(245,158,11,0.15);
+            border-radius: var(--radius);
+            padding: 16px 20px;
+            margin-bottom: 24px;
+        }
+
+        .rules-box h3 {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--brand);
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .rules-box ul {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .rules-box li {
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+            padding-left: 18px;
+            position: relative;
+        }
+
+        .rules-box li::before {
+            content: "⚠";
+            position: absolute;
+            left: 0;
+            font-size: 0.7rem;
+        }
+
+        .btn-start {
+            width: 100%;
+            padding: 16px;
+            background: var(--brand-gradient);
+            color: white;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: var(--transition);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-start:hover { transform: translateY(-2px); box-shadow: 0 8px 25px var(--brand-glow); }
+        .btn-start:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        /* ─── INTERVIEW SCREEN ─── */
+        .interview-screen {
+            display: none;
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+        }
+
+        .interview-screen.active { display: block; }
+        .setup-screen.hidden { display: none; }
+
+        /* Top Bar */
+        .top-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 24px;
+            background: rgba(17,24,39,0.95);
+            border-bottom: 1px solid var(--border);
+            backdrop-filter: blur(12px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .top-bar-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-icon {
+            width: 32px; height: 32px;
+            background: var(--brand-gradient);
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1rem;
+        }
+
+        .brand-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--brand);
+        }
+
+        .top-bar-center {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .progress-indicator {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .progress-dot {
+            width: 10px; height: 10px;
+            border-radius: 50%;
+            background: var(--border);
+            transition: var(--transition);
+        }
+
+        .progress-dot.done { background: var(--green); }
+        .progress-dot.current { background: var(--brand); box-shadow: 0 0 10px var(--brand-glow); animation: pulse 2s infinite; }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 5px var(--brand-glow); }
+            50% { box-shadow: 0 0 15px var(--brand-glow); }
+        }
+
+        .timer-badge {
+            background: var(--bg-card-alt);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .proctor-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 6px 12px;
+            border-radius: 20px;
+        }
+
+        .proctor-status.ok { background: var(--green-glow); color: var(--green); }
+        .proctor-status.warning { background: var(--red-glow); color: var(--red); }
+
+        .proctor-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        /* Main Layout */
+        .interview-main {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 0;
+            min-height: calc(100vh - 55px);
+        }
+
+        /* Left: Webcam Panel */
+        .webcam-panel {
+            background: var(--bg-card);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            padding: 16px;
+            gap: 12px;
+        }
+
+        .webcam-container {
+            position: relative;
+            background: #000;
+            border-radius: var(--radius);
+            overflow: hidden;
+            border: 2px solid var(--border);
+            aspect-ratio: 4/3;
+            transition: all 0.3s ease;
+        }
+        
+        #webcamVideo {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        #webcamOverlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .hud-status {
+            position: absolute;
+            bottom: 12px;
+            left: 12px;
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid var(--brand);
+            color: var(--brand);
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.65rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            backdrop-filter: blur(4px);
+            z-index: 20;
+            transition: all 0.3s ease;
+        }
+
+        .hud-status.violation {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: var(--red);
+            color: var(--red);
+            animation: pulse-red 1s infinite;
+        }
+
+        @keyframes pulse-red {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .webcam-container.violation { border-color: var(--red); box-shadow: 0 0 20px var(--red-glow); }
+
+        .webcam-container video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1); /* Mirror */
+        }
+
+        .webcam-label {
+            position: absolute;
+            bottom: 8px;
+            left: 8px;
+            background: rgba(0,0,0,0.7);
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.65rem;
+            font-weight: 600;
+            color: var(--green);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .webcam-no-access {
+            width: 100%;
+            aspect-ratio: 4/3;
+            background: var(--bg-card-alt);
+            border-radius: var(--radius);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            border: 2px dashed var(--border);
+        }
+
+        .webcam-no-access span { font-size: 0.75rem; color: var(--text-muted); }
+
+        .audio-viz {
+            background: var(--bg-card-alt);
+            border-radius: var(--radius);
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .audio-viz-label {
+            font-size: 0.65rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 4px;
+        }
+
+        .behavior-stats {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 16px;
+            padding: 16px;
+            background: rgba(255,255,255,0.03);
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+        }
+
+        .stat-row {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+
+        .stat-value {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--brand);
+        }
+
+        .stat-bar-bg {
+            height: 6px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .stat-bar-fill {
+            height: 100%;
+            background: var(--brand-gradient);
+            width: 100%;
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .stat-bar-fill.warning { background: linear-gradient(90deg, #f59e0b, #d97706); }
+        .stat-bar-fill.error { background: linear-gradient(90deg, #ef4444, #b91c1c); }
+
+        .audio-bars {
+            display: flex;
+            align-items: flex-end;
+            gap: 2px;
+            height: 40px;
+        }
+
+        .audio-bar {
+            flex: 1;
+            background: var(--brand);
+            border-radius: 2px;
+            min-height: 3px;
+            transition: height 0.08s ease;
+            opacity: 0.6;
+        }
+
+        .session-info {
+            margin-top: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            font-size: 0.72rem;
+            color: var(--text-muted);
+        }
+
+        .session-info-row {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* Right: Interview Area */
+        .interview-area {
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 55px);
+        }
+
+        /* Question Display */
+        .question-section {
+            padding: 32px 40px;
+            flex-shrink: 0;
+        }
+
+        .question-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .question-badge {
+            background: var(--brand-gradient);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: white;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .question-text {
+            font-size: 1.2rem;
+            line-height: 1.7;
+            color: var(--text-primary);
+            font-weight: 400;
+            max-width: 700px;
+        }
+
+        /* Answer Section */
+        .answer-section {
+            flex: 1;
+            padding: 0 40px 24px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .answer-tabs {
+            display: flex;
+            gap: 2px;
+            margin-bottom: 16px;
+            background: var(--bg-card-alt);
+            border-radius: var(--radius);
+            padding: 4px;
+            width: fit-content;
+        }
+
+        .answer-tab {
+            padding: 8px 20px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            transition: var(--transition);
+        }
+
+        .answer-tab.active {
+            background: var(--bg-card);
+            color: var(--text-primary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+
+        .answer-tab:hover:not(.active) { color: var(--text-secondary); }
+
+        /* Text Answer */
+        .text-answer-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .text-answer-area.hidden { display: none; }
+
+        .text-answer-area textarea {
+            flex: 1;
+            width: 100%;
+            min-height: 180px;
+            padding: 20px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            color: var(--text-primary);
+            font-size: 1rem;
+            font-family: inherit;
+            line-height: 1.7;
+            outline: none;
+            resize: none;
+            transition: var(--transition);
+        }
+
+        .text-answer-area textarea:focus {
+            border-color: var(--brand);
+            box-shadow: 0 0 0 3px var(--brand-glow);
+        }
+
+        .text-answer-area textarea::placeholder {
+            color: var(--text-muted);
+        }
+
+        .answer-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .word-count {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .btn-submit {
+            padding: 12px 32px;
+            background: var(--brand-gradient);
+            color: white;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-submit:hover { transform: translateY(-1px); box-shadow: 0 6px 20px var(--brand-glow); }
+        .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+        /* Audio Answer */
+        .audio-answer-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .audio-answer-area.hidden { display: none; }
+
+        .mic-btn {
+            width: 90px; height: 90px;
+            border-radius: 50%;
+            background: var(--brand-gradient);
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: white;
+            transition: var(--transition);
+            box-shadow: 0 0 25px var(--brand-glow);
+        }
+
+        .mic-btn.recording {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            box-shadow: 0 0 30px var(--red-glow);
+            animation: pulse-red 1.5s infinite;
+        }
+
+        @keyframes pulse-red {
+            0%, 100% { box-shadow: 0 0 20px var(--red-glow); }
+            50% { box-shadow: 0 0 40px var(--red-glow); }
+        }
+
+        .mic-btn:hover { transform: scale(1.05); }
+
+        .mic-status {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            text-align: center;
+        }
+
+        .transcript-box {
+            width: 100%;
+            max-width: 600px;
+            background: var(--bg-card-alt);
+            border-radius: var(--radius);
+            padding: 16px 20px;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            font-style: italic;
+            min-height: 60px;
+            border: 1px solid var(--border);
+        }
+
+        /* Evaluation Toast */
+        .eval-toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 20px 24px;
+            max-width: 380px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+            z-index: 200;
+            transform: translateY(120%);
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .eval-toast.show { transform: translateY(0); }
+
+        .eval-toast h4 {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--brand);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+
+        .eval-scores {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .eval-score-item {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.78rem;
+        }
+
+        .eval-score-item .label { color: var(--text-secondary); }
+        .eval-score-item .value { font-weight: 700; color: var(--text-primary); }
+
+        .eval-feedback {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            border-top: 1px solid var(--border);
+            padding-top: 10px;
+        }
+
+        /* History Panel (collapsible) */
+        .history-panel {
+            border-top: 1px solid var(--border);
+            max-height: 200px;
+            overflow-y: auto;
+            padding: 12px 40px;
+        }
+
+        .history-toggle {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .history-item {
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+        }
+
+        .history-q { font-size: 0.78rem; font-weight: 600; color: var(--text-muted); margin-bottom: 2px; }
+        .history-a { font-size: 0.82rem; color: var(--text-secondary); }
+        .history-score { font-size: 0.72rem; color: var(--brand); margin-top: 2px; }
+
+        /* Completion Screen */
+        .completion-screen {
+            display: none;
+            min-height: 100vh;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .completion-screen.active { display: flex; }
+
+        .report-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 48px;
+            max-width: 640px;
+            width: 100%;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.5);
+        }
+
+        .report-card h2 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-bottom: 8px;
+            background: var(--brand-gradient);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .report-summary { font-size: 0.9rem; color: var(--text-secondary); line-height: 1.6; margin-bottom: 24px; }
+
+        .report-scores {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .report-score-card {
+            background: var(--bg-card-alt);
+            border-radius: var(--radius);
+            padding: 16px;
+            text-align: center;
+        }
+
+        .report-score-card .score-val {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--brand);
+        }
+
+        .report-score-card .score-label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 4px;
+        }
+
+        .report-recommendation {
+            display: inline-block;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+
+        .report-recommendation.strong-yes, .report-recommendation.yes { background: var(--green-glow); color: var(--green); }
+        .report-recommendation.maybe { background: rgba(245,158,11,0.15); color: var(--brand); }
+        .report-recommendation.no, .report-recommendation.strong-no { background: var(--red-glow); color: var(--red); }
+
+        .report-section { margin-bottom: 16px; }
+        .report-section h4 {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .report-section ul { list-style: none; display: flex; flex-direction: column; gap: 4px; }
+        .report-section li { font-size: 0.85rem; color: var(--text-secondary); padding-left: 16px; position: relative; }
+        .report-section li::before { content: "•"; position: absolute; left: 0; color: var(--brand); }
+
+        .btn-back {
+            margin-top: 20px;
+            padding: 12px 28px;
+            background: var(--bg-card-alt);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-back:hover { background: var(--border); }
+
+        /* Proctoring Warning Overlay */
+        .proctor-warning {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            background: rgba(10, 10, 10, 0.95); /* Darker for high impact */
+            border-bottom: 2px solid #ef4444;
+            padding: 16px 24px;
+            text-align: center;
+            font-size: 0.9rem;
+            font-weight: 800; /* Extra bold */
+            color: #ef4444; /* Pure Red */
+            z-index: 1000; /* Topmost */
+            transform: translateY(-100%);
+            transition: transform 0.2s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+        }
+
+        .proctor-warning.show { transform: translateY(0); }
+
+        /* Loading Spinner */
+        .spinner {
+            width: 20px; height: 20px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            display: inline-block;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .interview-main { grid-template-columns: 1fr; }
+            .webcam-panel { flex-direction: row; padding: 12px; border-right: 0; border-bottom: 1px solid var(--border); }
+            .webcam-container { width: 120px; aspect-ratio: 1; }
+            .question-section, .answer-section, .history-panel { padding-left: 20px; padding-right: 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-effects"></div>
+
+    <!-- PROCTORING WARNING BAR -->
+    <div id="proctorWarning" class="proctor-warning">
+        ⚠️ <span id="proctorWarningText">Focus violation detected! Please stay on this tab.</span>
+    </div>
+
+    <!-- EVALUATION TOAST -->
+    <div id="evalToast" class="eval-toast">
+        <h4>Answer Evaluation</h4>
+        <div class="eval-scores" id="evalScores"></div>
+        <div class="eval-feedback" id="evalFeedback"></div>
+    </div>
+
+    <!-- ============ SETUP SCREEN ============ -->
+    <div id="setupScreen" class="setup-screen">
+        <div class="setup-card">
+            <h1>HireFlow AI Interview</h1>
+            <div class="subtitle">Proctored AI Assessment Session</div>
+
+            <div class="form-group">
+                <label>Your Full Name</label>
+                <input type="text" id="candidateName" placeholder="e.g. Shritan Patel" autocomplete="off">
+            </div>
+
+            <div class="form-group">
+                <label>Position / Job Role</label>
+                <input type="text" id="jobRole" placeholder="e.g. Senior Python Developer" autocomplete="off">
+            </div>
+
+            <div class="rules-box">
+                <h3>Proctoring Rules</h3>
+                <ul>
+                    <li>Your webcam will be active during the interview</li>
+                    <li>Tab switching will be detected and flagged</li>
+                    <li>You may answer via text or voice recording</li>
+                    <li>Each question is timed — take your time but be concise</li>
+                    <li>AI evaluates in real-time — no external help allowed</li>
+                </ul>
+            </div>
+
+            <button id="btnStartInterview" class="btn-start" onclick="startInterview()">
+                Begin Proctored Interview
+            </button>
+        </div>
+    </div>
+
+    <!-- ============ INTERVIEW SCREEN ============ -->
+    <div id="interviewScreen" class="interview-screen">
+        <!-- Top Bar -->
+        <div class="top-bar">
+            <div class="top-bar-left">
+                <div class="brand-icon">📁</div>
+                <div class="brand-title">HireFlow Agent</div>
+            </div>
+            <div class="top-bar-center">
+                <div class="progress-indicator" id="progressDots"></div>
+                <div class="timer-badge" id="timer">00:00</div>
+            </div>
+            <div id="proctorStatusBadge" class="proctor-status ok">
+                <div class="proctor-dot"></div>
+                <span>PROCTORING ACTIVE</span>
+            </div>
+        </div>
+
+        <div class="interview-main">
+            <!-- Left: Webcam -->
+            <div class="webcam-panel">
+                <div id="webcamContainer" class="webcam-container">
+                    <video id="webcamVideo" autoplay muted playsinline></video>
+                    <canvas id="webcamOverlay" width="320" height="240"></canvas>
+                    <div class="webcam-label">🟢 LIVE</div>
+                    <div id="hudStatus" class="hud-status">AI SECURE</div>
+                </div>
+
+                <div class="audio-viz">
+                        <div class="audio-viz-label">Voice Confidence</div>
+                        <div class="audio-bars" id="audioBars"></div>
+                    </div>
+
+                    <!-- BEHAVIORAL AI V2.0 STATS -->
+                    <div class="behavior-stats">
+                        <div class="stat-row">
+                            <div class="stat-header">
+                                <span class="stat-label">Attention Span</span>
+                                <span class="stat-value" id="attentionVal">100%</span>
+                            </div>
+                            <div class="stat-bar-bg">
+                                <div class="stat-bar-fill" id="attentionBar" style="width: 100%"></div>
+                            </div>
+                        </div>
+                        <div class="stat-row">
+                            <div class="stat-header">
+                                <span class="stat-label">Physical Stability</span>
+                                <span class="stat-value" id="stabilityVal">100%</span>
+                            </div>
+                            <div class="stat-bar-bg">
+                                <div class="stat-bar-fill" id="stabilityBar" style="width: 100%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                <div class="session-info">
+                    <div class="session-info-row">
+                        <span>Candidate</span>
+                        <span id="infoName">—</span>
+                    </div>
+                    <div class="session-info-row">
+                        <span>Role</span>
+                        <span id="infoRole">—</span>
+                    </div>
+                    <div class="session-info-row">
+                        <span>Proctor Flags</span>
+                        <span id="infoFlags">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Interview -->
+            <div class="interview-area">
+                <div class="question-section">
+                    <div class="question-header">
+                        <div class="question-badge" id="questionBadge">Question 1 / 5</div>
+                    </div>
+                    <div class="question-text" id="questionText">Loading first question...</div>
+                </div>
+
+                <div class="answer-section">
+                    <div class="answer-tabs">
+                        <button class="answer-tab active" id="tabText" onclick="switchTab('text')">✏️ Type Answer</button>
+                        <button class="answer-tab" id="tabAudio" onclick="switchTab('audio')">🎤 Voice Answer</button>
+                    </div>
+
+                    <!-- Text Answer -->
+                    <div class="text-answer-area" id="textArea">
+                        <textarea id="answerInput" placeholder="Type your answer here... Be specific and demonstrate your expertise."></textarea>
+                        <div class="answer-footer">
+                            <div class="word-count"><span id="wordCount">0</span> words</div>
+                            <button class="btn-submit" id="btnSubmitText" onclick="submitTextAnswer()">
+                                Submit Answer →
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Audio Answer -->
+                    <div class="audio-answer-area hidden" id="audioArea">
+                        <button class="mic-btn" id="micBtn" onclick="toggleRecording()">🎤</button>
+                        <div class="mic-status" id="micStatus">Click the mic to start recording</div>
+                        <div class="transcript-box hidden" id="transcriptBox">Transcription will appear here...</div>
+                        <button class="btn-submit hidden" id="btnSubmitAudio" onclick="submitAudioAnswer()" style="margin-top:10px;">
+                            Submit Voice Answer →
+                        </button>
+                    </div>
+                </div>
+
+                <!-- History -->
+                <div class="history-panel" id="historyPanel">
+                    <div class="history-toggle" onclick="document.getElementById('historyList').classList.toggle('hidden')">
+                        📋 Interview History ▾
+                    </div>
+                    <div id="historyList"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ COMPLETION SCREEN ============ -->
+    <div id="completionScreen" class="completion-screen">
+        <div class="report-card" id="reportCard"></div>
+    </div>
+
+    <!-- ============ JAVASCRIPT ENGINE ============ -->
+    <script>
+        const API = 'http://localhost:8000';
+
+        // ─── STATE ───
+        let sessionId = null;
+        let questionNumber = 0;
+        let totalQuestions = 5;
+        let timerInterval = null;
+        let questionStartTime = 0;
+        let totalElapsed = 0;
+        let proctorFlags = 0;
+        let webcamStream = null;
+        let audioContext = null;
+        let analyserNode = null;
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let isRecording = false;
+        let audioVisBars = [];
+
+        // ─── INIT AUDIO BARS ───
+        (function() {
+            const container = document.getElementById('audioBars');
+            for (let i = 0; i < 32; i++) {
+                const bar = document.createElement('div');
+                bar.className = 'audio-bar';
+                container.appendChild(bar);
+                audioVisBars.push(bar);
+            }
+        })();
+
+        // ─── START INTERVIEW ───
+        async function startInterview() {
+            const name = document.getElementById('candidateName').value.trim();
+            const role = document.getElementById('jobRole').value.trim();
+
+            if (!name || !role) {
+                alert('Please enter your name and the job role.');
+                return;
+            }
+
+            const btn = document.getElementById('btnStartInterview');
+            btn.disabled = true;
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<span class="spinner"></span> Starting session...';
+
+            console.log('--- STARTING INTERVIEW ---');
+            console.log('Candidate:', name, 'Role:', role);
+
+            try {
+                // Enforce Fullscreen Mode
+                try {
+                    await document.documentElement.requestFullscreen();
+                } catch (err) {
+                    console.warn("Fullscreen request failed or was denied:", err);
+                    alert("Please allow fullscreen mode to begin the proctored interview.");
+                    btn.disabled = false;
+                    btn.innerHTML = originalText;
+                    return;
+                }
+
+                // Start webcam
+                console.log('1. Starting webcam/mic...');
+                await startWebcam();
+                console.log('Webcam/mic initialized.');
+
+                // Start session via API
+                console.log('2. Calling backend /api/interview/start...');
+                const res = await fetch(`${API}/api/interview/start`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ candidate_name: name, job_role: role })
+                });
+
+                console.log('Backend response status:', res.status);
+
+                if (!res.ok) {
+                    const errData = await res.json().catch(() => ({}));
+                    console.error('Backend error details:', errData);
+                    throw new Error(errData.detail || `Server error: ${res.status}`);
+                }
+
+                console.log('3. Parsing response JSON...');
+                const data = await res.json();
+                console.log('Session data received:', data);
+
+                sessionId = data.session_id;
+                questionNumber = data.question_number || 1;
+                totalQuestions = data.total_questions || 5;
+
+                // Update UI
+                console.log('4. Updating UI elements...');
+                document.getElementById('infoName').textContent = name;
+                document.getElementById('infoRole').textContent = role;
+                document.getElementById('questionText').textContent = data.current_question || 'Error loading question';
+                
+                console.log('5. Updating progress indicators...');
+                updateProgressDots();
+                updateQuestionBadge();
+
+                // Switch screens
+                console.log('6. Transitioning to interview screen...');
+                document.getElementById('setupScreen').classList.add('hidden');
+                document.getElementById('interviewScreen').classList.add('active');
+
+                // Start timer
+                console.log('7. Starting timer and proctoring...');
+                startTimer();
+
+                // Start proctoring (tab switches)
+                startProctoring();
+                console.log('--- SESSION STARTED SUCCESSFULLY ---');
+
+            } catch (err) {
+                console.error('CRITICAL STARTUP ERROR:', err);
+                alert('Failed to start interview: ' + err.message);
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        }
+
+        // ─── WEBCAM ───
+        async function startWebcam() {
+            try {
+                webcamStream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'user', width: 320, height: 240 },
+                    audio: true
+                });
+                console.log('Stream acquired:', webcamStream.id);
+                document.getElementById('webcamVideo').srcObject = webcamStream;
+
+                // Set up audio analyser for visualization
+                if (window.AudioContext || window.webkitAudioContext) {
+                    console.log('Initializing AudioContext...');
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    const source = audioContext.createMediaStreamSource(webcamStream);
+                    analyserNode = audioContext.createAnalyser();
+                    analyserNode.fftSize = 64;
+                    source.connect(analyserNode);
+                    animateAudioBars();
+                }
+
+            } catch (err) {
+                console.warn('Webcam/mic access denied or failed:', err);
+                // We don't throw here to allow people without cameras to still test the text interview
+            }
+        }
+
+        function animateAudioBars() {
+            if (!analyserNode) return;
+            const data = new Uint8Array(analyserNode.frequencyBinCount);
+            function draw() {
+                analyserNode.getByteFrequencyData(data);
+                for (let i = 0; i < audioVisBars.length && i < data.length; i++) {
+                    const h = Math.max(3, (data[i] / 255) * 40);
+                    audioVisBars[i].style.height = h + 'px';
+                    audioVisBars[i].style.opacity = 0.3 + (data[i] / 255) * 0.7;
+                }
+                requestAnimationFrame(draw);
+            }
+            draw();
+        }
+
+        // ─── TIMER ───
+        function startTimer() {
+            questionStartTime = Date.now();
+            timerInterval = setInterval(() => {
+                const elapsed = Math.floor((Date.now() - questionStartTime) / 1000);
+                const mins = String(Math.floor(elapsed / 60)).padStart(2, '0');
+                const secs = String(elapsed % 60).padStart(2, '0');
+                document.getElementById('timer').textContent = `${mins}:${secs}`;
+            }, 1000);
+        }
+
+        function resetQuestionTimer() {
+            questionStartTime = Date.now();
+        }
+
+        // ─── PROGRESS DOTS ───
+        function updateProgressDots() {
+            const container = document.getElementById('progressDots');
+            container.innerHTML = '';
+            for (let i = 1; i <= totalQuestions; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'progress-dot';
+                if (i < questionNumber) dot.classList.add('done');
+                else if (i === questionNumber) dot.classList.add('current');
+                container.appendChild(dot);
+            }
+        }
+
+        function updateQuestionBadge() {
+            document.getElementById('questionBadge').textContent = `Question ${questionNumber} / ${totalQuestions}`;
+        }
+
+        // ─── TAB SWITCHING (Answer Tabs) ───
+        function switchTab(tab) {
+            document.getElementById('tabText').classList.toggle('active', tab === 'text');
+            document.getElementById('tabAudio').classList.toggle('active', tab === 'audio');
+            document.getElementById('textArea').classList.toggle('hidden', tab !== 'text');
+            document.getElementById('audioArea').classList.toggle('hidden', tab !== 'audio');
+        }
+
+        // ─── WORD COUNT ───
+        document.getElementById('answerInput').addEventListener('input', function() {
+            const words = this.value.trim().split(/\s+/).filter(w => w.length > 0);
+            document.getElementById('wordCount').textContent = words.length;
+        });
+
+        // ─── SUBMIT TEXT ANSWER ───
+        async function submitTextAnswer() {
+            const answer = document.getElementById('answerInput').value.trim();
+            if (!answer) {
+                alert('Please type your answer before submitting.');
+                return;
+            }
+
+            const btn = document.getElementById('btnSubmitText');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> AI Evaluating...';
+
+            try {
+                const res = await fetch(`${API}/api/interview/${sessionId}/answer`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ answer: answer })
+                });
+
+                if (!res.ok) throw new Error(`Server error: ${res.status}`);
+                const data = await res.json();
+
+                // Show evaluation toast
+                showEvalToast(data.evaluation);
+
+                // Add to history
+                addToHistory(questionNumber, document.getElementById('questionText').textContent, answer, data.evaluation);
+
+                if (data.is_complete) {
+                    // Interview done → get report
+                    await completeInterview();
+                } else {
+                    // Next question
+                    questionNumber = data.question_number;
+                    document.getElementById('questionText').textContent = data.next_question;
+                    document.getElementById('answerInput').value = '';
+                    document.getElementById('wordCount').textContent = '0';
+                    updateProgressDots();
+                    updateQuestionBadge();
+                    resetQuestionTimer();
+                }
+
+            } catch (err) {
+                alert('Error submitting answer: ' + err.message);
+            }
+
+            btn.disabled = false;
+            btn.innerHTML = 'Submit Answer →';
+        }
+
+        // ─── AUDIO RECORDING (WAV FALLBACK FOR SYSTEMS WITHOUT FFMPEG) ───
+
+        let audioProcessor = null;
+        let recordingContext = null;   // Separate context so we don't clobber webcam viz
+        let leftChannel = [];
+        let recordingSampleRate = 16000;
+
+        function toggleRecording() {
+            if (isRecording) {
+                stopRecording();
+            } else {
+                startRecording();
+            }
+        }
+
+        async function startRecording() {
+            try {
+                // Re-use the webcam stream's audio track if available, otherwise request mic
+                let stream;
+                if (webcamStream && webcamStream.getAudioTracks().length > 0) {
+                    stream = webcamStream;
+                } else {
+                    stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                }
+
+                // Use a SEPARATE AudioContext so we don't destroy the visualization one
+                if (recordingContext) {
+                    recordingContext.close().catch(() => {});
+                }
+                recordingContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: recordingSampleRate });
+                const source = recordingContext.createMediaStreamSource(stream);
+
+                audioProcessor = recordingContext.createScriptProcessor(4096, 1, 1);
+                leftChannel = [];
+
+                audioProcessor.onaudioprocess = (e) => {
+                    if (!isRecording) return;
+                    const input = e.inputBuffer.getChannelData(0);
+                    leftChannel.push(new Float32Array(input));
+                };
+
+                source.connect(audioProcessor);
+                audioProcessor.connect(recordingContext.destination);
+
+                isRecording = true;
+                document.getElementById('micBtn').classList.add('recording');
+                document.getElementById('micBtn').textContent = '⏹️';
+                document.getElementById('micStatus').textContent = '🔴 Recording... Click to stop.';
+                document.getElementById('btnSubmitAudio').classList.add('hidden');
+                document.getElementById('transcriptBox').classList.remove('hidden');
+                document.getElementById('transcriptBox').textContent = 'Listening...';
+
+            } catch (err) {
+                console.error('Mic error:', err);
+                alert('Microphone access denied: ' + err.message);
+            }
+        }
+
+        function stopRecording() {
+            if (isRecording) {
+                isRecording = false;
+                document.getElementById('micBtn').classList.remove('recording');
+                document.getElementById('micBtn').textContent = '🎤';
+                document.getElementById('micStatus').textContent = 'Recording complete. Click Submit to send.';
+                document.getElementById('btnSubmitAudio').classList.remove('hidden');
+                
+                // Finalize buffer
+                const flattened = flattenArray(leftChannel);
+                const wavBuffer = createWavBuffer(flattened, recordingSampleRate);
+                audioChunks = [new Blob([wavBuffer], { type: 'audio/wav' })];
+                
+                if (audioProcessor) {
+                    audioProcessor.disconnect();
+                    audioProcessor = null;
+                }
+            }
+        }
+
+        function flattenArray(channelBuffer) {
+            let result = new Float32Array(channelBuffer.length * 4096);
+            let offset = 0;
+            for (let i = 0; i < channelBuffer.length; i++) {
+                result.set(channelBuffer[i], offset);
+                offset += channelBuffer[i].length;
+            }
+            return result.slice(0, offset);
+        }
+
+        function createWavBuffer(samples, sampleRate) {
+            const buffer = new ArrayBuffer(44 + samples.length * 2);
+            const view = new DataView(buffer);
+
+            const writeString = (view, offset, string) => {
+                for (let i = 0; i < string.length; i++) {
+                    view.setUint8(offset + i, string.charCodeAt(i));
+                }
+            };
+
+            writeString(view, 0, 'RIFF');
+            view.setUint32(4, 32 + samples.length * 2, true);
+            writeString(view, 8, 'WAVE');
+            writeString(view, 12, 'fmt ');
+            view.setUint32(16, 16, true);
+            view.setUint16(20, 1, true);
+            view.setUint16(22, 1, true);
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, sampleRate * 2, true);
+            view.setUint16(32, 2, true);
+            view.setUint16(34, 16, true);
+            writeString(view, 36, 'data');
+            view.setUint32(40, samples.length * 2, true);
+
+            let offset = 44;
+            for (let i = 0; i < samples.length; i++, offset += 2) {
+                let s = Math.max(-1, Math.min(1, samples[i]));
+                view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+            }
+
+            return buffer;
+        }
+
+        function min(a, b) { return a < b ? a : b; }
+
+        async function submitAudioAnswer() {
+            if (audioChunks.length === 0) {
+                alert('No audio recorded. Please record your answer first.');
+                return;
+            }
+
+            const btn = document.getElementById('btnSubmitAudio');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> Transcribing & Evaluating...';
+            document.getElementById('transcriptBox').classList.remove('hidden');
+            document.getElementById('transcriptBox').textContent = 'Processing audio...';
+
+            const audioBlob = audioChunks[0];  // Already a valid WAV Blob from stopRecording()
+            const formData = new FormData();
+            formData.append('audio', audioBlob, 'recording.wav');
+
+            try {
+                const res = await fetch(`${API}/api/interview/${sessionId}/audio`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!res.ok) throw new Error(`Server error: ${res.status}`);
+                const data = await res.json();
+
+                // Show transcript
+                const transcriptText = data.transcript?.text || '(No speech detected)';
+                document.getElementById('transcriptBox').textContent = `Transcript: "${transcriptText}"`;
+
+                // Show evaluation toast
+                showEvalToast(data.evaluation);
+
+                // Add to history
+                addToHistory(questionNumber, document.getElementById('questionText').textContent, transcriptText, data.evaluation);
+
+                if (data.is_complete) {
+                    await completeInterview();
+                } else {
+                    questionNumber = data.question_number;
+                    document.getElementById('questionText').textContent = data.next_question;
+                    document.getElementById('transcriptBox').classList.add('hidden');
+                    document.getElementById('btnSubmitAudio').classList.add('hidden');
+                    updateProgressDots();
+                    updateQuestionBadge();
+                    resetQuestionTimer();
+                    audioChunks = [];
+                }
+
+            } catch (err) {
+                alert('Error submitting audio: ' + err.message);
+            }
+
+            btn.disabled = false;
+            btn.innerHTML = 'Submit Voice Answer →';
+        }
+
+        // ─── EVALUATION TOAST ───
+        function showEvalToast(evaluation) {
+            const toast = document.getElementById('evalToast');
+            const scoresDiv = document.getElementById('evalScores');
+            const feedbackDiv = document.getElementById('evalFeedback');
+
+            scoresDiv.innerHTML = `
+                <div class="eval-score-item"><span class="label">Overall</span><span class="value">${evaluation.score}/10</span></div>
+                <div class="eval-score-item"><span class="label">Technical</span><span class="value">${evaluation.technical_accuracy}/10</span></div>
+                <div class="eval-score-item"><span class="label">Communication</span><span class="value">${evaluation.communication_clarity}/10</span></div>
+                <div class="eval-score-item"><span class="label">Relevance</span><span class="value">${evaluation.relevance}/10</span></div>
+            `;
+            feedbackDiv.textContent = evaluation.feedback || '';
+
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 6000);
+        }
+
+        // ─── HISTORY ───
+        function addToHistory(qNum, question, answer, evaluation) {
+            const list = document.getElementById('historyList');
+            const item = document.createElement('div');
+            item.className = 'history-item';
+            item.innerHTML = `
+                <div class="history-q">Q${qNum}: ${question.substring(0, 120)}${question.length > 120 ? '...' : ''}</div>
+                <div class="history-a">${answer.substring(0, 200)}${answer.length > 200 ? '...' : ''}</div>
+                <div class="history-score">Score: ${evaluation.score}/10</div>
+            `;
+            list.prepend(item);
+        }
+
+        let noiseViolationCount = 0;
+        let lastMotionScore = 0;
+
+        function startProctoring() {
+            // 1. Tab visibility change detection
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden) {
+                    proctorFlags++;
+                    document.getElementById('infoFlags').textContent = proctorFlags;
+                    showProctorError('FATAL ERROR: Tab switching detected! This is a severe violation.');
+                    logProctorEvent('TAB_SWITCH');
+                }
+            });
+
+            // 2. Window blur detection
+            window.addEventListener('blur', () => {
+                proctorFlags++;
+                document.getElementById('infoFlags').textContent = proctorFlags;
+                showProctorError('FATAL ERROR: App switching or Window blur detected!');
+                logProctorEvent('WINDOW_BLUR');
+            });
+
+            // 3. Fullscreen exit detection
+            document.addEventListener('fullscreenchange', () => {
+                if (!document.fullscreenElement) {
+                    proctorFlags++;
+                    document.getElementById('infoFlags').textContent = proctorFlags;
+                    showProctorError('FATAL ERROR: Fullscreen exited! High-security mode breached.');
+                    logProctorEvent('FULLSCREEN_EXIT');
+                    setTimeout(() => {
+                        if (document.getElementById('interviewScreen').classList.contains('active')) {
+                            document.documentElement.requestFullscreen().catch(e => console.error(e));
+                        }
+                    }, 2000);
+                }
+            });
+
+            // 4. Real-time Noise Monitoring (RMS)
+            startNoiseMonitor();
+
+            // 5. High-Frequency Vision Check (increased to 5Hz for "Instant" feel)
+            setInterval(sendProctorFrame, 200);
+        }
+
+        function startNoiseMonitor() {
+            if (!audioContext || !analyserNode) return;
+            const buffer = new Uint8Array(analyserNode.fftSize);
+            const freqBuffer = new Uint8Array(analyserNode.frequencyBinCount);
+            
+            function monitor() {
+                analyserNode.getByteTimeDomainData(buffer);
+                analyserNode.getByteFrequencyData(freqBuffer);
+
+                // 1. RMS for violations
+                let sum = 0;
+                for (let i = 0; i < buffer.length; i++) {
+                    const sample = (buffer[i] - 128) / 128;
+                    sum += sample * sample;
+                }
+                const rms = Math.sqrt(sum / buffer.length);
+                if (rms > 0.4) {
+                    noiseViolationCount++;
+                    if (noiseViolationCount % 50 === 0) {
+                        showProctorError('ERROR: Excessive background noise detected!');
+                        logProctorEvent('NOISE_VIOLATION');
+                    }
+                }
+
+                // 2. Bar Animation
+                for (let i = 0; i < audioVisBars.length; i++) {
+                    const val = freqBuffer[i * 2] || 0;
+                    const height = Math.max(2, (val / 255) * 40);
+                    audioVisBars[i].style.height = `${height}px`;
+                    audioVisBars[i].style.opacity = 0.3 + (val / 255) * 0.7;
+                }
+
+                requestAnimationFrame(monitor);
+            }
+            monitor();
+        }
+
+        function showProctorError(text) {
+            const el = document.getElementById('proctorWarning');
+            const status = document.getElementById('proctorStatusBadge');
+            
+            document.getElementById('proctorWarningText').textContent = text;
+            el.classList.add('show');
+            el.style.borderColor = 'var(--red)';
+            el.style.background = 'rgba(239, 68, 68, 0.1)';
+            
+            status.className = 'proctor-status error';
+            status.querySelector('span').textContent = 'ERROR DETECTED';
+
+            setTimeout(() => {
+                el.classList.remove('show');
+                if (proctorFlags < 3) {
+                    status.className = 'proctor-status ok';
+                    status.querySelector('span').textContent = 'PROCTORING ACTIVE';
+                }
+            }, 5000);
+            
+            // Auto-kick DISABLED for demo (v7.0)
+        }
+
+        function showProctorWarning(text) {
+            const el = document.getElementById('proctorWarning');
+            // Ensure exact format: ⚠️ FATAL ERROR: [MESSAGE]
+            document.getElementById('proctorWarningText').innerHTML = `⚠️ FATAL ERROR: ${text}`;
+            el.classList.add('show');
+
+            setTimeout(() => {
+                el.classList.remove('show');
+            }, 3000); // 3 seconds per alert
+        }
+
+        async function sendProctorFrame() {
+            if (!webcamStream || !sessionId) return;
+            const video = document.getElementById('webcamVideo');
+            if (video.readyState < 2) return; // Not ready
+
+            try {
+                const canvas = document.createElement('canvas');
+                canvas.width = 160; // Lower res for high-freq performance
+                canvas.height = 120;
+                canvas.getContext('2d').drawImage(video, 0, 0, 160, 120);
+                const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', 0.5));
+                if (!blob) return;
+
+                const formData = new FormData();
+                formData.append('frame', blob, 'frame.jpg');
+
+                const res = await fetch(`${API}/api/interview/${sessionId}/proctor`, {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+
+                if (data.scores) {
+                    updateBehaviorBars(data.scores.attention, data.scores.stability);
+                    
+                    // Update AI HUD
+                    drawFaceMesh(data.landmarks, data.violation);
+                    const hud = document.getElementById('hudStatus');
+                    if (data.violation) {
+                        hud.textContent = `⚠️ VIOLATION: ${data.violation_type}`;
+                        hud.className = "hud-status violation";
+                        document.getElementById('webcamContainer').classList.add('violation');
+                        
+                        // BROADCAST FATAL ERROR HUD (Requested by User)
+                        showProctorWarning(`FATAL ERROR: ${data.reason.toUpperCase()}`);
+                        proctorFlags++;
+                        document.getElementById('infoFlags').textContent = proctorFlags;
+                    } else {
+                        hud.textContent = "🛡️ AI MODEL SECURE";
+                        hud.className = "hud-status";
+                        document.getElementById('webcamContainer').classList.remove('violation');
+                    }
+                }
+            } catch (err) { }
+        }
+
+        function updateBehaviorBars(att, stab) {
+            const aVal = Math.round(att);
+            const sVal = Math.round(stab);
+            
+            document.getElementById('attentionVal').textContent = `${aVal}%`;
+            const attBar = document.getElementById('attentionBar');
+            attBar.style.width = `${aVal}%`;
+            attBar.className = 'stat-bar-fill' + (aVal < 40 ? ' error' : (aVal < 70 ? ' warning' : ''));
+
+            document.getElementById('stabilityVal').textContent = `${sVal}%`;
+            const stabBar = document.getElementById('stabilityBar');
+            stabBar.style.width = `${sVal}%`;
+            stabBar.className = 'stat-bar-fill' + (sVal < 40 ? ' error' : (sVal < 70 ? ' warning' : ''));
+        }
+
+        function drawFaceMesh(landmarks, isViolation) {
+            const canvas = document.getElementById('webcamOverlay');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            if (!landmarks || landmarks.length === 0) return;
+
+            // Mirror Context
+            ctx.save();
+            ctx.translate(canvas.width, 0);
+            ctx.scale(-1, 1);
+
+            const baseColor = isViolation ? "239, 68, 68" : "16, 185, 129";
+            
+            // Draw Points (Mesh Topology)
+            ctx.fillStyle = `rgba(${baseColor}, 0.5)`;
+            for (let i = 0; i < landmarks.length; i++) {
+                const pt = landmarks[i];
+                ctx.beginPath();
+                ctx.arc(pt.x * canvas.width, pt.y * canvas.height, 1, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Draw connecting lines for eyes/mouth to look 'AI-trained'
+                if (i % 20 === 0) {
+                    ctx.strokeStyle = `rgba(${baseColor}, 0.2)`;
+                    ctx.beginPath();
+                    ctx.moveTo(pt.x * canvas.width, pt.y * canvas.height);
+                    const nextPt = landmarks[(i + 20) % landmarks.length];
+                    ctx.lineTo(nextPt.x * canvas.width, nextPt.y * canvas.height);
+                    ctx.stroke();
+                }
+            }
+            
+            ctx.restore();
+            
+            // Data Labels (Non-Mirrored)
+            ctx.font = "bold 10px monospace";
+            ctx.fillStyle = `rgb(${baseColor})`;
+            ctx.fillText("AI_TRACKING: ACTIVE", 10, 20);
+            ctx.fillText(`STATUS: ${isViolation ? 'BREACH' : 'NORMAL'}`, 10, 35);
+            
+            if (isViolation) {
+                ctx.fillStyle = "#ef4444";
+                ctx.fillText("⚠️ SECURITY_BREACH_DETECTED", canvas.width - 200, 20);
+            }
+        }
+
+
+        async function logProctorEvent(eventType) {
+            // Log local event to backend history
+            try {
+                await fetch(`${API}/api/interview/${sessionId}/log_event`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type: eventType, timestamp: Date.now() })
+                });
+            } catch (e) {}
+        }
+
+        // ─── COMPLETE INTERVIEW ───
+        async function completeInterview() {
+            try {
+                const res = await fetch(`${API}/api/interview/${sessionId}/complete`, {
+                    method: 'POST'
+                });
+
+                if (!res.ok) throw new Error('Failed to generate report');
+                const report = await res.json();
+
+                clearInterval(timerInterval);
+                showReport(report);
+
+            } catch (err) {
+                console.error('Error completing interview:', err);
+                showReport({
+                    executive_summary: 'Interview completed. Report generation encountered an issue.',
+                    overall_score: 0,
+                    total_questions: questionNumber,
+                    proctor_flags: proctorFlags,
+                    duration_seconds: Math.floor((Date.now() - questionStartTime) / 1000),
+                    recommendation: 'MAYBE',
+                    strengths: [],
+                    areas_for_improvement: []
+                });
+            }
+        }
+
+        function showReport(report) {
+            document.getElementById('interviewScreen').classList.remove('active');
+            document.getElementById('completionScreen').classList.add('active');
+
+            const recClass = (report.recommendation || 'maybe').toLowerCase().replace('_', '-');
+            const mins = Math.floor((report.duration_seconds || 0) / 60);
+
+            document.getElementById('reportCard').innerHTML = `
+                <h2>Interview Assessment Report</h2>
+                <p class="report-summary">${report.executive_summary || 'Interview completed.'}</p>
+
+                <div class="report-scores">
+                    <div class="report-score-card">
+                        <div class="score-val">${report.overall_score || 0}</div>
+                        <div class="score-label">Overall Score</div>
+                    </div>
+                    <div class="report-score-card">
+                        <div class="score-val">${report.total_questions || 0}</div>
+                        <div class="score-label">Questions</div>
+                    </div>
+                    <div class="report-score-card">
+                        <div class="score-val">${mins}m</div>
+                        <div class="score-label">Duration</div>
+                    </div>
+                </div>
+
+                <div class="report-recommendation ${recClass}">
+                    ${(report.recommendation || 'MAYBE').replace('_', ' ')}
+                </div>
+                ${report.recommendation_reason ? `<p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:20px;">${report.recommendation_reason}</p>` : ''}
+
+                ${report.strengths && report.strengths.length ? `
+                    <div class="report-section">
+                        <h4>✅ Strengths</h4>
+                        <ul>${report.strengths.map(s => `<li>${s}</li>`).join('')}</ul>
+                    </div>
+                ` : ''}
+
+                ${report.areas_for_improvement && report.areas_for_improvement.length ? `
+                    <div class="report-section">
+                        <h4>📈 Areas for Improvement</h4>
+                        <ul>${report.areas_for_improvement.map(s => `<li>${s}</li>`).join('')}</ul>
+                    </div>
+                ` : ''}
+
+                ${report.proctor_flags > 0 ? `
+                    <div class="report-section">
+                        <h4>⚠️ Proctoring</h4>
+                        <p style="font-size:0.85rem;color:var(--red);">${report.proctor_flags} proctor event(s) detected during the interview.</p>
+                    </div>
+                ` : ''}
+
+                <button class="btn-back" onclick="window.location.href='./index.html'">← Back to Dashboard</button>
+            `;
+        }
+    </script>
+</body>
+</html>

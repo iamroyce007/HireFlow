@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HireFlow — AI Recruitment Platform</title>
+    <meta name="description" content="HireFlow: Enterprise AI-powered recruitment platform. Login as Candidate or Recruiter.">
+    <link rel="stylesheet" href="./styles.css">
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        /* ═══ SPLASH SCREEN ═══ */
+        .splash {
+            position: fixed;
+            inset: 0;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-base);
+            transition: opacity 0.8s ease, visibility 0.8s ease;
+        }
+        .splash.fade-out {
+            opacity: 0;
+            visibility: hidden;
+        }
+        .splash-logo {
+            width: 100px;
+            height: 100px;
+            border-radius: 24px;
+            object-fit: contain;
+            animation: splashFloat 2.5s ease-in-out infinite;
+            filter: drop-shadow(0 0 40px rgba(245, 158, 11, 0.35));
+        }
+        @keyframes splashFloat {
+            0%, 100% { transform: translate(-50%, 0) scale(1); }
+            50% { transform: translate(-50%, -12px) scale(1.04); }
+        }
+        .splash-title {
+            font-size: 2.8rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 40%, #f59e0b 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-top: 20px;
+            letter-spacing: -1px;
+            opacity: 0;
+            animation: splashFadeUp 0.8s ease forwards 0.3s;
+        }
+        .splash-sub {
+            font-size: 0.92rem;
+            color: var(--text-secondary);
+            margin-top: 8px;
+            opacity: 0;
+            animation: splashFadeUp 0.8s ease forwards 0.6s;
+        }
+        .splash-loader {
+            margin-top: 36px;
+            display: flex;
+            gap: 8px;
+            opacity: 0;
+            animation: splashFadeUp 0.6s ease forwards 0.9s;
+        }
+        .splash-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--brand-primary);
+            animation: splashBounce 1.4s infinite ease-in-out both;
+        }
+        .splash-dot:nth-child(1) { animation-delay: 0s; }
+        .splash-dot:nth-child(2) { animation-delay: 0.16s; }
+        .splash-dot:nth-child(3) { animation-delay: 0.32s; }
+        @keyframes splashBounce {
+            0%, 80%, 100% { transform: scale(0.4); opacity: 0.4; }
+            40% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes splashFadeUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .splash-particles {
+            position: absolute;
+            inset: 0;
+            overflow: hidden;
+            pointer-events: none;
+        }
+        .splash-particle {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            background: var(--brand-primary);
+            border-radius: 50%;
+            opacity: 0;
+            animation: particleRise 3s linear infinite;
+        }
+        @keyframes particleRise {
+            0% { opacity: 0; transform: translateY(100vh) scale(0); }
+            10% { opacity: 0.6; }
+            90% { opacity: 0.6; }
+            100% { opacity: 0; transform: translateY(-20vh) scale(1); }
+        }
+
+        /* ═══ LOGIN PAGE ═══ */
+        .login-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            z-index: 1;
+            padding: 40px 20px;
+            opacity: 0;
+            transition: opacity 0.6s ease;
+        }
+        .login-container.visible { opacity: 1; }
+        .login-logo-img {
+            width: 72px;
+            height: 72px;
+            border-radius: 18px;
+            object-fit: contain;
+            margin-bottom: 16px;
+            filter: drop-shadow(0 4px 30px rgba(245,158,11,0.25));
+            animation: logoHover 3s ease-in-out infinite;
+        }
+        @keyframes logoHover {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-4px); }
+        }
+        .login-title {
+            font-size: 2.4rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 40%, #f59e0b 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 6px;
+            letter-spacing: -0.5px;
+        }
+        .login-subtitle {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            margin-bottom: 48px;
+            text-align: center;
+            max-width: 400px;
+        }
+        .login-cards {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 28px;
+            max-width: 700px;
+            width: 100%;
+        }
+        @media (max-width: 640px) {
+            .login-cards { grid-template-columns: 1fr; }
+        }
+        .login-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-xl);
+            padding: 36px 28px;
+            text-align: center;
+            transition: all var(--t-normal) var(--ease-out);
+            cursor: default;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: cardReveal 0.6s ease forwards;
+        }
+        .login-card:nth-child(1) { animation-delay: 0.1s; }
+        .login-card:nth-child(2) { animation-delay: 0.25s; }
+        @keyframes cardReveal {
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .login-card:hover {
+            border-color: var(--glass-border-hover);
+            background: var(--bg-card-hover);
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+        }
+        .login-card-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.6rem;
+            margin: 0 auto 16px;
+        }
+        .login-card-icon.candidate {
+            background: rgba(16, 185, 129, 0.12);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+        .login-card-icon.recruiter {
+            background: rgba(139, 92, 246, 0.12);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+        }
+        .login-card h3 {
+            font-size: 1.15rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+            color: var(--text-primary);
+        }
+        .login-card p {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            margin-bottom: 22px;
+            line-height: 1.5;
+        }
+        .login-input {
+            width: 100%;
+            padding: 10px 14px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--glass-border);
+            background: rgba(255,255,255,0.04);
+            color: var(--text-primary);
+            font-size: 0.82rem;
+            font-family: inherit;
+            margin-bottom: 10px;
+            outline: none;
+            transition: border-color var(--t-fast);
+        }
+        .login-input:focus { border-color: var(--brand-primary); }
+        .login-input::placeholder { color: var(--text-muted); }
+        .login-btn {
+            width: 100%;
+            padding: 11px;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-weight: 700;
+            font-size: 0.85rem;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all var(--t-fast);
+            margin-top: 6px;
+        }
+        .login-btn.candidate-btn {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+        }
+        .login-btn.candidate-btn:hover {
+            box-shadow: 0 4px 20px rgba(16,185,129,0.3);
+            transform: translateY(-1px);
+        }
+        .login-btn.recruiter-btn {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            color: white;
+        }
+        .login-btn.recruiter-btn:hover {
+            box-shadow: 0 4px 20px rgba(139,92,246,0.3);
+            transform: translateY(-1px);
+        }
+        .login-footer {
+            margin-top: 48px;
+            font-size: 0.72rem;
+            color: var(--text-muted);
+        }
+        .login-error {
+            font-size: 0.72rem;
+            color: var(--rose);
+            margin-bottom: 6px;
+            min-height: 18px;
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-effects">
+        <div class="bg-grid"></div>
+        <div class="glow-orb"></div>
+        <div class="glow-orb"></div>
+        <div class="glow-orb"></div>
+    </div>
+
+    <!-- Global Transitioning Logo -->
+
+    <!-- Splash Screen -->
+    <div class="splash" id="splash">
+        <div class="splash-particles" id="particles"></div>
+        <div class="splash-content" id="splashContent">
+            <img src="./banner.png" alt="HireFlow" style="width: 320px; margin-bottom: 24px; filter: drop-shadow(0 0 20px rgba(251, 191, 36, 0.3));" />
+            <div class="splash-sub">Initializing AI Recruitment Engine...</div>
+            <div class="splash-loader">
+                <div class="splash-dot"></div>
+                <div class="splash-dot"></div>
+                <div class="splash-dot"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="root"></div>
+
+    <style>
+
+        /* Adjust splash content to avoid overlap since logo was moved out */
+        .splash-content {
+            margin-top: 100px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: opacity 0.5s ease;
+        }
+        .splash.fade-out .splash-content {
+            opacity: 0;
+        }
+
+        /* Update login container to account for the fixed logo */
+    </style>
+
+    <script>
+        // Generate floating particles
+        (function() {
+            const container = document.getElementById('particles');
+            for (let i = 0; i < 20; i++) {
+                const p = document.createElement('div');
+                p.className = 'splash-particle';
+                p.style.left = Math.random() * 100 + '%';
+                p.style.animationDelay = Math.random() * 3 + 's';
+                p.style.animationDuration = (2 + Math.random() * 2) + 's';
+                container.appendChild(p);
+            }
+        })();
+
+        // Splash screen timer
+        setTimeout(function() {
+            // 1. Fade the splash text and overlay
+            document.getElementById('splash').classList.add('fade-out');
+            
+            setTimeout(function() {
+                document.getElementById('splash').style.display = 'none';
+                var lc = document.querySelector('.login-container');
+                if (lc) lc.classList.add('visible');
+            }, 800);
+        }, 1500);
+    </script>
+
+    <script type="text/babel">
+        const { useState } = React;
+
+        const LoginPage = () => {
+            return (
+                <div className="login-container">
+                    <img src="./banner.png" alt="HireFlow" style={{width:'100%', maxWidth:350, marginBottom:48, filter:'drop-shadow(0 4px 25px rgba(245,158,11,0.2))'}} />
+                    
+                    <div className="login-cards">
+                        {/* Candidate Card */}
+                        <div className="login-card" onClick={() => window.location.href = 'candidate-login.html'} style={{cursor:'pointer'}}>
+                            <div className="login-card-icon candidate">👤</div>
+                            <h3>Candidate Login</h3>
+                            <p>Apply for positions, take AI interviews, and track your application status.</p>
+                            <button className="login-btn candidate-btn">
+                                I am a Candidate →
+                            </button>
+                        </div>
+
+                        {/* Recruiter Card */}
+                        <div className="login-card" onClick={() => window.location.href = 'recruiter-login.html'} style={{cursor:'pointer'}}>
+                            <div className="login-card-icon recruiter">🔑</div>
+                            <h3>Recruiter Login</h3>
+                            <p>Review candidates, manage interviews, and make data-driven hiring decisions.</p>
+                            <button className="login-btn recruiter-btn">
+                                I am a Recruiter →
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            );
+        };
+
+        ReactDOM.createRoot(document.getElementById('root')).render(<LoginPage />);
+    </script>
+</body>
+</html>
+
