@@ -27,7 +27,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-_api_key_store = {"key": "AIzaSyBzW5r7hk_yTKchbET5FDk4MJ2_UHKBHxk"}
+_api_key_store = {"key": "ENTER YOUR GEMINI API KEY"}
 
 
 def get_db():
