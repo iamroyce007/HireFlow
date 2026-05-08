@@ -1,4 +1,4 @@
-# 🚀 HireFlow — AI Recruitment Platform
+#  HireFlow — AI Recruitment Platform
 
 **HireFlow** is an end-to-end AI-powered recruitment engine designed to automate resume screening, candidate evaluation, and proctored technical interviews. Built for the modern recruiter, it leverages Google Gemini and deep-learning heuristics to identify top-tier talent with extreme precision.
 
@@ -6,26 +6,26 @@
 
 ---
 
-## ✨ Core Features
+##  Core Features
 
 ### 🔍 Intelligent Screening
 *   **AI Resume Parsing:** Extracts skills, experience, and key achievements using LLM-based entity recognition.
 *   **Vector-like Matching:** Semantic matching between candidate profiles and job descriptions.
 *   **Social Signal Analysis:** Deep-dives into **GitHub** and **LinkedIn** profiles to verify technical expertise and career trajectory.
 
-### 🧪 Advanced Evaluation
+###  Advanced Evaluation
 *   **Autonomous Interview Agents:** AI-driven interviewers that generate questions dynamically based on the candidate's background.
 *   **Multi-Modal Evaluation:** Scores candidates across technical accuracy, communication clarity, and behavioral consistency.
 *   **Composite Scoring:** Weighted engine that combines resume strength, social signals, and interview performance into a single "Hireability Score."
 
-### 🛡️ Standalone Proctoring System (v2.0)
+###  Standalone Proctoring System (v2.0)
 *   **Live AI Proctoring:** Real-time face detection, eye-tracking, and tab-switching monitoring.
 *   **Multi-Channel Recording:** Analyzes audio, video (JPEG frames), and transcript data for integrity.
 *   **Comprehensive Reports:** Detailed AI assessment reports generated instantly after interview completion.
 
 ---
 
-## 🛠 Tech Stack
+##  Tech Stack
 
 | Component | Technology |
 | :--- | :--- |
@@ -37,7 +37,7 @@
 
 ---
 
-## 🚀 Quickstart
+##  Quickstart
 
 ### 1. Prerequisites
 Ensure you have **Python 3.10+** installed.
@@ -82,7 +82,7 @@ smart_hiring_platform/
 
 ---
 
-## 🔑 Configuration
+##  Configuration
 To enable the full AI evaluation pipeline, navigate to the **Settings** menu in the Recruiter Dashboard and configure your **Gemini AI API Key**.
 
 ---
